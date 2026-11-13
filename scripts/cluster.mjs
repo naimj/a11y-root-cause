@@ -91,6 +91,9 @@ const kebab = (s) => s.replace(/Component$/, '').replace(/([a-z0-9])([A-Z])/g, '
 let FILES = null;
 function resolveSource(name, root, framework) {
   if (!name || name.startsWith('(') || name === 'Anonymous') return null;
+  // Names come from the scanned page (untrusted): only accept plain identifiers,
+  // so they can never inject regex syntax or path segments.
+  if (!/^[A-Za-z_$][\w$-]{0,80}$/.test(name)) return null;
   FILES ||= walk(root);
   const base = (f) => basename(f).replace(/\.(component|stories|spec|test)?\.?(t|j)sx?$|\.vue$|\.svelte$/, '');
   // 1. filename match (Button.tsx, Button.vue, button.component.ts, Button/index.tsx)
@@ -101,7 +104,8 @@ function resolveSource(name, root, framework) {
   });
   // 2. content match
   if (!hits.length) {
-    const re = new RegExp(`(export\\s+(default\\s+)?(class|function)\\s+${name}\\b|(const|let|var)\\s+${name}\\s*[=:]|name:\\s*['"\`]${name}['"\`]|displayName\\s*=\\s*['"\`]${name}['"\`])`);
+    const n = name.replace(/[$]/g, '\\$&'); // `$` is the only regex metachar allowed by the check above
+    const re = new RegExp(`(export\\s+(default\\s+)?(class|function)\\s+${n}\\b|(const|let|var)\\s+${n}\\s*[=:]|name:\\s*['"\`]${n}['"\`]|displayName\\s*=\\s*['"\`]${n}['"\`])`);
     for (const f of FILES) {
       if (/\.(spec|test|stories)\./.test(f)) continue;
       try { if (statSync(f).size < 400000 && re.test(readFileSync(f, 'utf8'))) hits.push(f); } catch {}

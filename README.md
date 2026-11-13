@@ -13,7 +13,7 @@ Most a11y tools give you a flat list: 140 violations, page by page. In a compone
 ## Install
 
 ```bash
-npx skills add naimj/a11y-root-cause
+npx skills add <owner>/a11y-root-cause
 cd <skills dir>/a11y-root-cause/scripts && npm install
 ```
 
